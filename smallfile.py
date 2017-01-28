@@ -43,11 +43,25 @@ import threading
 import socket
 import errno
 import codecs
+import pycurl
+import uuid
 
 OK = 0  # system call return code for success
 NOTOK = 1
 KB_PER_GB = 1 << 20
 pct_files_min = 90  # min % of files considered acceptable for a test run
+
+# PARCHMENT variables
+STORAGEAPI = os.getenv('STORAGEAPI')
+BUCKET = os.getenv('BUCKET')
+# PARCHMENT logging
+LOG_FILENAME = 'MYUUIDS.log'
+
+# Set up a specific logger with our desired output level
+my_logger = logging.getLogger("MyLogger")
+my_handler = logging.FileHandler(LOG_FILENAME)
+my_logger.setLevel(logging.DEBUG)
+my_logger.addHandler(my_handler)
 
 # we have to support a variety of python environments,
 # so for optional features don't blow up if they aren't there, just remember
@@ -227,6 +241,27 @@ def binary_buf_str(b):      # display a binary buffer as a text string
             return bytes(b).decode('UTF-8', 'backslashreplace')
         else:
             return b.decode('UTF-8', 'backslashreplace')
+
+
+# PARCHMENT FUNCTIONS
+# post_file: will post to the storageapi and log the UUID and RESPONSE to a FILE
+def post_file(filename):
+    fileUUID = str(uuid.uuid4())
+    fileURL = STORAGEAPI + BUCKET + "/" + str(fileUUID)
+    filesize = os.path.getsize(filename)
+    with open(filename, "r", 0) as fd:
+        c = pycurl.Curl()
+        c.setopt(c.URL, fileURL)
+        c.setopt(c.POST, 1)
+        c.setopt(c.POSTFIELDSIZE, filesize)
+        c.setopt(c.READFUNCTION, fd.read)
+        c.setopt(c.WRITEFUNCTION, lambda x: None)
+        c.perform()
+        responseCode = str(c.getinfo(pycurl.HTTP_CODE))
+        c.close()
+    fd.close()
+    my_logger.debug("FileUUID: " + fileUUID + "ResponseCode: " + responseCode)
+    return(str(fileUUID))
 
 
 class SmallfileWorkload:
@@ -1052,6 +1087,8 @@ class SmallfileWorkload:
                     remaining_kb -= next_kb
                 if self.record_ctime_size:
                     remember_ctime_size_xattr(fd)
+                fileUUID = post_file(fn)
+                self.log.info("UUID:" + fileUUID)
             except OSError as e:
                 if e.errno == errno.ENOENT and self.dirs_on_demand:
                     os.makedirs(os.path.dirname(fn))
