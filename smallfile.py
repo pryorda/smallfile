@@ -260,7 +260,7 @@ def post_file(filename):
         responseCode = str(c.getinfo(pycurl.HTTP_CODE))
         c.close()
     fd.close()
-    my_logger.debug("FileUUID: " + fileUUID + "ResponseCode: " + responseCode)
+    my_logger.debug("FileUUID: " + fileUUID + " ResponseCode: " + responseCode)
     return(str(fileUUID))
 
 
