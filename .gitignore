@@ -1,0 +1,6 @@
+*.pyc
+*.log
+curl.py
+Results.txt
+_*_*_
+*-*-*-*-*

@@ -821,6 +821,7 @@ class SmallfileWorkload:
             '_',
             self.suffix,
             ]
+        self.log.info("mk_file_nm:" + ''.join(components))
         return ''.join(components)
 
     # generate buffer contents, use these on writes and
