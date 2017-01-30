@@ -1106,7 +1106,8 @@ class SmallfileWorkload:
                     remember_ctime_size_xattr(fd)
                 fileUUID = post_file(fn)
                 readFileUUID = get_file(fileUUID)
-                self.log.info("UUID:" + fileUUID + " Read " + readFileUUID)
+                self.log.info("UUID:" + fileUUID + " Read "
+                              + str(readFileUUID))
             except OSError as e:
                 if e.errno == errno.ENOENT and self.dirs_on_demand:
                     os.makedirs(os.path.dirname(fn))
