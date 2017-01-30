@@ -600,7 +600,7 @@ class SmallfileWorkload:
     # (i.e. it is ready to immediately begin generating workload)
 
     def gen_thread_ready_fname(self, tid, hostname=None):
-        return join(self.tmp_dir, 'thread_ready.' + tid + '.tmp')
+        return join(self.top_dirs[0], './thread_ready.' + tid + '.tmp')
 
     # each host uses this to signal that it is
     # ready to immediately begin generating workload
@@ -627,7 +627,7 @@ class SmallfileWorkload:
     # log file for this worker thread goes here
 
     def log_fn(self):
-        return join(self.tmp_dir, 'invoke_logs-%s.log' % self.tid)
+        return join(self.top_dirs[0], './invoke_logs-%s.log' % self.tid)
 
     # file for result stored as pickled python object
 
