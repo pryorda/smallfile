@@ -244,7 +244,8 @@ def binary_buf_str(b):      # display a binary buffer as a text string
 
 
 # PARCHMENT FUNCTIONS
-# post_file: will post to the storageapi and log the UUID and RESPONSE to a FILE
+# post_file: will post to the storageapi and log the UUID and RESPONSE to a
+# FILE
 def post_file(filename):
     fileUUID = str(uuid.uuid4())
     fileURL = STORAGEAPI + BUCKET + "/" + str(fileUUID)
@@ -260,8 +261,23 @@ def post_file(filename):
         responseCode = str(c.getinfo(pycurl.HTTP_CODE))
         c.close()
     fd.close()
-    my_logger.debug("FileUUID: " + fileUUID + " ResponseCode: " + responseCode)
+    my_logger.debug("WRITE:FileUUID: " + fileUUID + " ResponseCode: "
+                    + responseCode)
     return(str(fileUUID))
+
+
+def get_file(fileUUID):
+    fileURL = STORAGEAPI + BUCKET + "/" + str(fileUUID)
+    with open('/dev/null', 'wb') as fd:
+        c = pycurl.Curl()
+        c.setopt(c.URL, fileURL)
+        c.setopt(c.WRITEDATA, fd)
+        c.perform()
+        responseCode = c.getinfo(c.HTTP_CODE)
+        c.close()
+    fd.close()
+    my_logger.debug("READ:FileUUID: " + fileUUID + " ResponseCode: "
+                    + responseCode)
 
 
 class SmallfileWorkload:
@@ -1089,7 +1105,8 @@ class SmallfileWorkload:
                 if self.record_ctime_size:
                     remember_ctime_size_xattr(fd)
                 fileUUID = post_file(fn)
-                self.log.info("UUID:" + fileUUID)
+                readFileUUID = get_file(fileUUID)
+                self.log.info("UUID:" + fileUUID + " Read " + readFileUUID)
             except OSError as e:
                 if e.errno == errno.ENOENT and self.dirs_on_demand:
                     os.makedirs(os.path.dirname(fn))
@@ -1202,7 +1219,8 @@ class SmallfileWorkload:
             try:
                 # don't use O_APPEND, it has different semantics!
                 fd = os.open(fn, os.O_WRONLY | O_BINARY)
-                if append: os.lseek(fd, 0, os.SEEK_END)
+                if append:
+                    os.lseek(fd, 0, os.SEEK_END)
                 remaining_kb = self.get_next_file_size()
                 self.prepare_buf()
                 rszkb = self.get_record_size_to_use()
