@@ -277,7 +277,7 @@ def get_file(fileUUID):
         c.close()
     fd.close()
     my_logger.debug("READ:FileUUID: " + fileUUID + " ResponseCode: "
-                    + responseCode)
+                    + str(responseCode))
 
 
 class SmallfileWorkload:
