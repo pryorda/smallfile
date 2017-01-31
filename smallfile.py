@@ -268,7 +268,7 @@ def post_file(filename):
 
 def get_file(fileUUID):
     fileURL = STORAGEAPI + BUCKET + "/" + str(fileUUID)
-    with open(os.devnull, 'wb') as fd:
+    with open(os.devnull, 'w') as fd:
         c = pycurl.Curl()
         c.setopt(c.URL, fileURL)
         c.setopt(c.WRITEDATA, fd)
