@@ -45,6 +45,10 @@ import errno
 import codecs
 import pycurl
 import uuid
+import boto
+import boto
+import boto.s3.connection
+from boto.s3.key import Key
 
 OK = 0  # system call return code for success
 NOTOK = 1
@@ -54,6 +58,9 @@ pct_files_min = 90  # min % of files considered acceptable for a test run
 # PARCHMENT variables
 STORAGEAPI = os.getenv('STORAGEAPI')
 BUCKET = os.getenv('BUCKET')
+access_key = os.getenv('AWS_ACCESS_KEY_ID')
+secret_key = os.getenv('AWS_SECRET_ACCESS_KEY')
+
 # PARCHMENT logging
 LOG_FILENAME = 'MYUUIDS.log'
 
@@ -247,37 +254,43 @@ def binary_buf_str(b):      # display a binary buffer as a text string
 # post_file: will post to the storageapi and log the UUID and RESPONSE to a
 # FILE
 def post_file(filename):
+    conn = boto.connect_s3(
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+            host=STORAGEAPI,
+            is_secure=False,               # uncomment if you are not using ssl
+            calling_format=boto.s3.connection.OrdinaryCallingFormat(),
+            )
+    cephBucket = conn.create_bucket(str(BUCKET).lower())
     fileUUID = str(uuid.uuid4())
-    fileURL = STORAGEAPI + BUCKET + "/" + str(fileUUID)
-    filesize = os.path.getsize(filename)
+    strippedFileName = fileUUID.replace('-', '')
+    folderStructure = strippedFileName[0:2] + "/" + strippedFileName[2:5] + \
+        "/" + strippedFileName[5:8] + "/" + strippedFileName[8:11] + "/" + \
+        strippedFileName[11:14] + "/" + strippedFileName[14:17] + "/"
     with open(filename, "r", 0) as fd:
-        c = pycurl.Curl()
-        c.setopt(c.URL, fileURL)
-        c.setopt(c.POST, 1)
-        c.setopt(c.POSTFIELDSIZE, filesize)
-        c.setopt(c.READFUNCTION, fd.read)
-        c.setopt(c.WRITEFUNCTION, lambda x: None)
-        c.perform()
-        responseCode = str(c.getinfo(pycurl.HTTP_CODE))
-        c.close()
+        put_key = Key(cephBucket)
+        put_key.key = folderStructure + fileUUID
+        put_key.set_contents_from_filename(
+            filename)
     fd.close()
-    my_logger.debug("WRITE:FileUUID: " + fileUUID + " ResponseCode: "
-                    + responseCode)
-    return(str(fileUUID))
+    my_logger.debug("WRITE:FileUUID: " + folderStructure + fileUUID)
+    return(str(folderStructure + fileUUID))
 
 
 def get_file(fileUUID):
-    fileURL = STORAGEAPI + BUCKET + "/" + str(fileUUID)
+    conn = boto.connect_s3(
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+            host=STORAGEAPI,
+            is_secure=False,               # uncomment if you are not using ssl
+            calling_format=boto.s3.connection.OrdinaryCallingFormat(),
+            )
+    cephBucket = conn.get_bucket(BUCKET)
     with open(os.devnull, 'w') as fd:
-        c = pycurl.Curl()
-        c.setopt(c.URL, fileURL)
-        c.setopt(c.WRITEDATA, fd)
-        c.perform()
-        responseCode = c.getinfo(c.HTTP_CODE)
-        c.close()
+        get_key = cephBucket.get_key(str(fileUUID))
+        get_key.get_contents_to_filename(fd)
     fd.close()
-    my_logger.debug("READ:FileUUID: " + fileUUID + " ResponseCode: "
-                    + str(responseCode))
+    my_logger.debug("READ:FileUUID: " + fileUUID)
 
 
 class SmallfileWorkload:
