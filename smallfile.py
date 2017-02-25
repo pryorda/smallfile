@@ -43,9 +43,7 @@ import threading
 import socket
 import errno
 import codecs
-import pycurl
 import uuid
-import boto
 import boto
 import boto.s3.connection
 from boto.s3.key import Key
@@ -267,30 +265,26 @@ def post_file(filename):
     folderStructure = strippedFileName[0:2] + "/" + strippedFileName[2:5] + \
         "/" + strippedFileName[5:8] + "/" + strippedFileName[8:11] + "/" + \
         strippedFileName[11:14] + "/" + strippedFileName[14:17] + "/"
-    with open(filename, "r", 0) as fd:
-        put_key = Key(cephBucket)
-        put_key.key = folderStructure + fileUUID
-        put_key.set_contents_from_filename(
-            filename)
-    fd.close()
+    put_key = Key(cephBucket)
+    put_key.key = folderStructure + fileUUID
+    put_key.set_contents_from_filename(filename)
     my_logger.debug("WRITE:FileUUID: " + folderStructure + fileUUID)
     return(str(folderStructure + fileUUID))
 
 
 def get_file(fileUUID):
-    conn = boto.connect_s3(
+    conn2 = boto.connect_s3(
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
             host=STORAGEAPI,
             is_secure=False,               # uncomment if you are not using ssl
             calling_format=boto.s3.connection.OrdinaryCallingFormat(),
             )
-    cephBucket = conn.get_bucket(BUCKET)
-    with open(os.devnull, 'w') as fd:
-        get_key = cephBucket.get_key(str(fileUUID))
-        get_key.get_contents_to_filename(fd)
-    fd.close()
+    cephBucket = conn2.get_bucket(BUCKET)
+    get_key = cephBucket.get_key(str(fileUUID))
+    get_key.get_contents_to_filename("/dev/null")
     my_logger.debug("READ:FileUUID: " + fileUUID)
+    return(fileUUID)
 
 
 class SmallfileWorkload:
@@ -1117,10 +1111,10 @@ class SmallfileWorkload:
                     remaining_kb -= next_kb
                 if self.record_ctime_size:
                     remember_ctime_size_xattr(fd)
-                fileUUID = post_file(fn)
-                readFileUUID = get_file(fileUUID)
-                self.log.info("UUID:" + fileUUID + " Read "
-                              + str(readFileUUID))
+                fileuuid = post_file(fn)
+                readfileuuid = get_file(fileuuid)
+                self.log.info("uuid:" + fileuuid + " read "
+                              + str(readfileuuid))
             except OSError as e:
                 if e.errno == errno.ENOENT and self.dirs_on_demand:
                     os.makedirs(os.path.dirname(fn))

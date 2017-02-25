@@ -16,16 +16,17 @@ conn = boto.connect_s3(
         host='localhost',
         is_secure=False,               # uncomment if you are not using ssl
         calling_format=boto.s3.connection.OrdinaryCallingFormat(),
+        debug=2
         )
 
 # Create Bucket
-bucket = conn.create_bucket(str(BUCKET).lower())
+bucket = conn.create_bucket("logo")
 
 # List Bucket
-for bucket in conn.get_all_buckets():
+for aBucket in conn.get_all_buckets():
         print "{name}\t{created}".format(
-                name=bucket.name,
-                created=bucket.creation_date,
+                name=aBucket.name,
+                created=aBucket.creation_date,
         )
 
 # Create Folder
