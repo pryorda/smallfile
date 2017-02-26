@@ -282,7 +282,7 @@ def get_file(fileUUID):
             calling_format=boto.s3.connection.OrdinaryCallingFormat(),
             port=7480
             )
-    cephBucket = conn2.get_bucket(BUCKET)
+    cephBucket = conn2.get_bucket(str(BUCKET).lower())
     get_key = cephBucket.get_key(str(fileUUID))
     get_key.get_contents_to_filename("/dev/null")
     my_logger.debug("READ:FileUUID: " + fileUUID)
