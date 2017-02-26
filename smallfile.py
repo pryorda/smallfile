@@ -258,6 +258,7 @@ def post_file(filename):
             host=STORAGEAPI,
             is_secure=False,               # uncomment if you are not using ssl
             calling_format=boto.s3.connection.OrdinaryCallingFormat(),
+            port=7480
             )
     cephBucket = conn.create_bucket(str(BUCKET).lower())
     fileUUID = str(uuid.uuid4())
@@ -279,6 +280,7 @@ def get_file(fileUUID):
             host=STORAGEAPI,
             is_secure=False,               # uncomment if you are not using ssl
             calling_format=boto.s3.connection.OrdinaryCallingFormat(),
+            port=7480
             )
     cephBucket = conn2.get_bucket(BUCKET)
     get_key = cephBucket.get_key(str(fileUUID))
