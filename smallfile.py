@@ -250,20 +250,23 @@ def post_file(filename):
     fileUUID = str(uuid.uuid4())
     fileURL = STORAGEAPI + BUCKET + "/" + str(fileUUID)
     filesize = os.path.getsize(filename)
+    headers = {"Content-Type": "application/octet-stream"}
+
     with open(filename, "r", 0) as fd:
         c = pycurl.Curl()
         c.setopt(c.URL, fileURL)
         c.setopt(c.POST, 1)
         c.setopt(c.POSTFIELDSIZE, filesize)
-        c.setopt(c.READFUNCTION, fd.read)
-        c.setopt(c.WRITEFUNCTION, lambda x: None)
-        c.perform()
+        c.setopt(pycurl.READFUNCTION, fd.read)
+        c.setopt(pycurl.HTTPHEADER, ['%s: %s' % (k, headers[k]) for k in headers])
+        c.setopt(pycurl.WRITEFUNCTION, lambda x: None)
+        output = c.perform()
         responseCode = str(c.getinfo(pycurl.HTTP_CODE))
         c.close()
     fd.close()
     my_logger.debug("WRITE:FileUUID: " + fileUUID + " ResponseCode: "
-                    + responseCode)
-    return(str(fileUUID))
+                    + responseCode + " Size: " + str(filesize) )
+
 
 
 def get_file(fileUUID):
